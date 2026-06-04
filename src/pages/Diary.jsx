@@ -18,31 +18,21 @@ async function saveDiary({ title, content }) {
 }
 
 async function loadDiaries() {
-  const res = await fetch(`${BASE}/api/public/breath`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: 'diary jiner-keke', max_tokens: 8000 }),
-  })
+  const res = await fetch(`${BASE}/api/public/list?tag=diary`)
   if (!res.ok) throw new Error(`${res.status}`)
-  const data = await res.json()
-  const text = data.result || ''
-  
-  // 按 --- 分块，每块作为一条日记
-  const blocks = text.split(/\n---\n/).filter(s => s.trim())
-  return blocks.map((block, i) => {
-    const clean = block.replace(/\[.*?\]/g, '').trim()
-    // 尝试提取标题
-    const titleMatch = clean.match(/【日记】(.+)/)
-    const title = titleMatch ? titleMatch[1].trim() : `日记 ${i + 1}`
-    // 内容是标题后面的部分
-    const content = clean.replace(/【日记】.+/, '').trim()
+  const list = await res.json()
+  return list.map((b, i) => {
+    const lines = b.content.split('\n')
+    const titleLine = lines.find(l => l.includes('【日记】')) || ''
+    const title = titleLine.replace('【日记】', '').trim() || `日记 ${i + 1}`
+    const content = lines.filter(l => !l.includes('【日记】')).join('\n').trim()
     return {
-      id: i + 1,
+      id: b.id,
       title,
-      content: content || clean,
-      date: new Date().toISOString().slice(0, 10),
+      content,
+      date: b.created ? b.created.slice(0, 10) : new Date().toISOString().slice(0, 10),
     }
-  }).filter(e => e.title || e.content)
+  })
 }
 
 function formatDate(str) {
@@ -57,7 +47,6 @@ export default function Diary() {
   const [writing, setWriting] = useState(false)
   const [form, setForm] = useState({ title: '', content: '' })
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
 
   function load() {
     if (!BASE) { setLoading(false); return }
@@ -67,7 +56,7 @@ export default function Diary() {
         setEntries(list)
         if (list.length) setActive(list[0].id)
       })
-      .catch(e => setError(e.message))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }
 
@@ -97,11 +86,7 @@ export default function Diary() {
         <button onClick={() => setWriting(true)} style={{ margin: '0 16px 12px', padding: '8px 0', width: 'calc(100% - 32px)', background: 'var(--ink)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
           + 写日记
         </button>
-        {loading ? (
-          <p style={{ padding: '12px 16px', fontSize: '13px', opacity: 0.5 }}>加载中…</p>
-        ) : error ? (
-          <p style={{ padding: '12px 16px', fontSize: '13px', color: 'red' }}>加载失败</p>
-        ) : (
+        {loading ? <p style={{ padding: '12px 16px', fontSize: '13px', opacity: 0.5 }}>加载中…</p> : (
           <ul className={styles.list}>
             {entries.map(e => (
               <li key={e.id} className={[styles.item, active === e.id ? styles.itemActive : ''].join(' ')} onClick={() => { setActive(e.id); setWriting(false) }}>
@@ -130,9 +115,9 @@ export default function Diary() {
               {current.content.trim().split('\n').map((line, i) => line === '' ? <br key={i} /> : <p key={i}>{line}</p>)}
             </div>
           </>
-        ) : entries.length === 0 && !loading ? (
+        ) : (
           <p className={styles.empty}>还没有日记，点左上角开始写吧。</p>
-        ) : null}
+        )}
       </main>
     </div>
   )
