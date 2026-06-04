@@ -1,0 +1,35 @@
+/* ── Morandi palette ───────────────────────────── */
+:root {
+  --bg:          #F2EEE8;
+  --surface:     #EAE5DE;
+  --card:        #F7F4F0;
+  --rose:        #C4A99B;
+  --rose-light:  #E0CFC7;
+  --sage:        #9BADA4;
+  --stone:       #A49C8F;
+  --lavender:    #B5AEBC;
+  --text:        #5C5047;
+  --muted:       #9A8F84;
+  --border:      rgba(164,156,143,0.22);
+  --border-md:   rgba(164,156,143,0.38);
+
+  --serif:       'Noto Serif SC', serif;
+  --sans:        'Noto Sans SC', sans-serif;
+  --radius-sm:   8px;
+  --radius-md:   14px;
+  --radius-lg:   20px;
+}
+
+/* ── Reset ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: var(--sans);
+  font-weight: 300;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
