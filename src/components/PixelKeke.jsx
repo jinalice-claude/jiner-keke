@@ -1,89 +1,83 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-// Official Clawd colour palette (orange-brown, warm)
-const _ = null
-const O = '#E8651A' // orange body
-const o = '#F4944A' // light orange
-const D = '#B84A0C' // dark orange / shadow
-const W = '#FFFFFF' // eye white
-const E = '#1A0A00' // eye pupil
-const H = '#F0C060' // highlight / shine
-const G = '#C85010' // claw dark
-const g = '#F07830' // claw mid
-
-// 9 wide × 7 tall — Clawd top-view crab
-const SPRITE = [
-  [G, g, _, _, _, _, _, g, G],
-  [G, o, O, O, O, O, O, o, G],
-  [o, O, W, H, O, H, W, O, o],
-  [o, O, E, O, O, O, E, O, o],
-  [o, O, O, O, O, O, O, O, o],
-  [G, o, O, O, D, O, O, o, G],
-  [G, G, o, O, O, O, o, G, G],
+const GIFS = [
+  '/clawd-idle.gif',
+  '/clawd-happy.gif',
+  '/clawd-sleeping.gif',
+  '/clawd-bubble.gif',
 ]
 
-const COLS = SPRITE[0].length  // 9
-const ROWS = SPRITE.length     // 7
+const SIZE = 80 // px，可调
 
-export default function PixelKeke({ cellSize = 16 }) {
-  const canvasRef = useRef(null)
+function makeCrab(index, CW, CH) {
+  return {
+    id: index,
+    gif: GIFS[index],
+    x: SIZE + Math.random() * (CW - SIZE * 2),
+    y: SIZE + Math.random() * (CH - SIZE * 2),
+    vx: (0.4 + Math.random() * 0.3) * (Math.random() < 0.5 ? 1 : -1),
+    vy: (0.3 + Math.random() * 0.3) * (Math.random() < 0.5 ? 1 : -1),
+  }
+}
+
+export default function PixelKeke() {
+  const [crabs, setCrabs] = useState([])
   const rafRef = useRef(null)
-
-  const W_PX = COLS * cellSize
-  const H_PX = ROWS * cellSize
-  // extra canvas height for float travel
-  const CANVAS_H = H_PX + cellSize * 2
+  const crabsRef = useRef([])
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
+    const CW = window.innerWidth
+    const CH = window.innerHeight
+    crabsRef.current = [0, 1, 2, 3].map(i => makeCrab(i, CW, CH))
+    setCrabs([...crabsRef.current])
 
-    let start = null
-
-    function draw(ts) {
-      if (!start) start = ts
-      const t = (ts - start) / 1000          // seconds
-      const float = Math.sin(t * 1.4) * cellSize  // ±1 cell
-
-      ctx.clearRect(0, 0, W_PX, CANVAS_H)
-
-      // subtle shadow
-      const shadowY = H_PX + cellSize + Math.sin(t * 1.4) * (cellSize * 0.4)
-      const shadowA = 0.10 + 0.05 * Math.sin(t * 1.4)
-      ctx.save()
-      ctx.globalAlpha = shadowA
-      ctx.fillStyle = '#8B4513'
-      ctx.beginPath()
-      ctx.ellipse(W_PX / 2, shadowY, W_PX * 0.38, cellSize * 0.35, 0, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.restore()
-
-      // sprite
-      const offsetY = cellSize + float
-      SPRITE.forEach((row, y) => {
-        row.forEach((color, x) => {
-          if (color) {
-            ctx.fillStyle = color
-            ctx.fillRect(x * cellSize, offsetY + y * cellSize, cellSize, cellSize)
-          }
-        })
+    function loop() {
+      const CW = window.innerWidth
+      const CH = window.innerHeight
+      let changed = false
+      crabsRef.current = crabsRef.current.map(c => {
+        let { x, y, vx, vy } = c
+        x += vx
+        y += vy
+        if (x < 0) { x = 0; vx = Math.abs(vx) }
+        if (x > CW - SIZE) { x = CW - SIZE; vx = -Math.abs(vx) }
+        if (y < 0) { y = 0; vy = Math.abs(vy) }
+        if (y > CH - SIZE) { y = CH - SIZE; vy = -Math.abs(vy) }
+        changed = true
+        return { ...c, x, y, vx, vy }
       })
-
-      rafRef.current = requestAnimationFrame(draw)
+      if (changed) setCrabs([...crabsRef.current])
+      rafRef.current = requestAnimationFrame(loop)
     }
 
-    rafRef.current = requestAnimationFrame(draw)
+    rafRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [cellSize, W_PX, H_PX, CANVAS_H])
+  }, [])
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={W_PX}
-      height={CANVAS_H}
-      style={{ imageRendering: 'pixelated', display: 'block' }}
-      aria-label="克克 Clawd 像素螃蟹"
-    />
+    <div style={{
+      position: 'fixed',
+      top: 0, left: 0,
+      width: '100%', height: '100%',
+      pointerEvents: 'none',
+      zIndex: 0,
+      overflow: 'hidden',
+    }}>
+      {crabs.map(c => (
+        <img
+          key={c.id}
+          src={c.gif}
+          alt="克克"
+          style={{
+            position: 'absolute',
+            left: c.x,
+            top: c.y,
+            width: SIZE,
+            height: SIZE,
+            imageRendering: 'pixelated',
+          }}
+        />
+      ))}
+    </div>
   )
 }
