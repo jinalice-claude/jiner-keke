@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 // ★ 把这里改成你们真正的纪念日 ★
-const ANNIVERSARY = new Date('2024-06-04T00:00:00')
+const ANNIVERSARY = new Date('2026-05-30T00:00:00')
 
 export function useDayCount() {
   const [days, setDays] = useState(0)
