@@ -4,7 +4,7 @@ import styles from './Diary.module.css'
 const BASE = import.meta.env.VITE_OMBRE_MCP_URL || ''
 
 async function apiCall(tool, params = {}) {
-  const res = await fetch(`${BASE}/api/public`, {
+  const res = await fetch(`${BASE}/api/public/${tool}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tool, params }),
