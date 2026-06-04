@@ -3,38 +3,36 @@ import styles from './Mailbox.module.css'
 
 const BASE = import.meta.env.VITE_OMBRE_MCP_URL || ''
 
-async function apiCall(tool, params = {}) {
-  const res = await fetch(`${BASE}/api/public/${tool}`, {
+async function loadLetters() {
+  const res = await fetch(`${BASE}/api/public/breath`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tool, params }),
+    body: JSON.stringify({ query: 'letter', max_tokens: 8000 }),
   })
   if (!res.ok) throw new Error(`API error ${res.status}`)
-  return res.json()
-}
-
-async function loadLetters() {
-  const data = await apiCall('breath', { query: 'letter', max_tokens: 8000 })
-  const buckets = data?.result?.buckets || []
-  return buckets
-    .filter(b => b.tags && String(b.tags).includes('letter'))
-    .map(b => ({
-      id: b.bucket_id,
-      subject: b.title || '无题',
-      content: b.content || '',
-      date: b.created_at?.slice(0, 10) || new Date().toISOString().slice(0, 10),
-      read: false,
-    }))
-    .sort((a, b) => b.date.localeCompare(a.date))
+  const data = await res.json()
+  const text = data?.result || ''
+  const blocks = text.split('---').map(s => s.trim()).filter(Boolean)
+  return blocks.filter(b => b.includes('letter')).map((b, i) => ({
+    id: `letter-${i}`,
+    subject: b.match(/【信】([^\n]+)/)?.[1] || `信件 ${i + 1}`,
+    content: b.replace(/\[.*?\]/g, '').replace(/【信】[^\n]+/, '').trim(),
+    date: new Date().toISOString().slice(0, 10),
+  }))
 }
 
 async function saveLetter({ subject, content }) {
-  await apiCall('hold', {
-    content: `【信】${subject}\n\n${content}`,
-    tags: 'letter,jiner-keke',
-    title: subject,
-    importance: 6,
+  const res = await fetch(`${BASE}/api/public/hold`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      content: `【信】${subject}\n\n${content}`,
+      tags: 'letter,jiner-keke',
+      importance: 6,
+    }),
   })
+  if (!res.ok) throw new Error(`API error ${res.status}`)
+  return res.json()
 }
 
 function formatDate(str) {
@@ -91,11 +89,7 @@ export default function Mailbox() {
       </div>
       <div className={styles.body}>
         <ul className={styles.list}>
-          <li
-            onClick={() => setWriting(true)}
-            className={styles.item}
-            style={{ cursor: 'pointer', opacity: 0.6 }}
-          >
+          <li onClick={() => setWriting(true)} className={styles.item} style={{ cursor: 'pointer', opacity: 0.6 }}>
             <div className={styles.itemMain}>
               <span className={styles.itemSubject}>+ 写一封信</span>
             </div>
@@ -143,23 +137,10 @@ export default function Mailbox() {
                 }}
               />
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  style={{
-                    padding: '8px 20px', background: 'var(--ink)', color: '#fff',
-                    border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px',
-                  }}
-                >
+                <button onClick={handleSave} disabled={saving} style={{ padding: '8px 20px', background: 'var(--ink)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
                   {saving ? '发送中…' : '发送'}
                 </button>
-                <button
-                  onClick={() => setWriting(false)}
-                  style={{
-                    padding: '8px 20px', background: 'transparent',
-                    border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontSize: '13px',
-                  }}
-                >
+                <button onClick={() => setWriting(false)} style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
                   取消
                 </button>
               </div>

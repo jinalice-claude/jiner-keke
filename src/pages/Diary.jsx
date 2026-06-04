@@ -3,37 +3,37 @@ import styles from './Diary.module.css'
 
 const BASE = import.meta.env.VITE_OMBRE_MCP_URL || ''
 
-async function apiCall(tool, params = {}) {
-  const res = await fetch(`${BASE}/api/public/${tool}`, {
+async function loadDiaries() {
+  const res = await fetch(`${BASE}/api/public/breath`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tool, params }),
+    body: JSON.stringify({ query: 'diary', max_tokens: 8000 }),
+  })
+  if (!res.ok) throw new Error(`API error ${res.status}`)
+  const data = await res.json()
+  const text = data?.result || ''
+  // 从返回文本里解析日记条目（bucket_id + 内容）
+  const blocks = text.split('---').map(s => s.trim()).filter(Boolean)
+  return blocks.filter(b => b.includes('diary')).map((b, i) => ({
+    id: `diary-${i}`,
+    date: new Date().toISOString().slice(0, 10),
+    title: b.match(/【日记】([^\n]+)/)?.[1] || `日记 ${i + 1}`,
+    content: b.replace(/\[.*?\]/g, '').replace(/【日记】[^\n]+/, '').trim(),
+  }))
+}
+
+async function saveDiary({ title, content }) {
+  const res = await fetch(`${BASE}/api/public/hold`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      content: `【日记】${title}\n\n${content}`,
+      tags: 'diary,jiner-keke',
+      importance: 5,
+    }),
   })
   if (!res.ok) throw new Error(`API error ${res.status}`)
   return res.json()
-}
-
-async function loadDiaries() {
-  const data = await apiCall('breath', { query: 'diary', max_tokens: 8000 })
-  const buckets = data?.result?.buckets || []
-  return buckets
-    .filter(b => b.tags && String(b.tags).includes('diary'))
-    .map(b => ({
-      id: b.bucket_id,
-      date: b.created_at?.slice(0, 10) || new Date().toISOString().slice(0, 10),
-      title: b.title || '无题',
-      content: b.content || '',
-    }))
-    .sort((a, b) => b.date.localeCompare(a.date))
-}
-
-async function saveDiary({ title, content, date }) {
-  await apiCall('hold', {
-    content: `【日记】${title}\n\n${content}`,
-    tags: 'diary,jiner-keke',
-    title,
-    importance: 5,
-  })
 }
 
 function formatDate(str) {
@@ -66,7 +66,7 @@ export default function Diary() {
     if (!form.title.trim() || !form.content.trim()) return
     setSaving(true)
     try {
-      await saveDiary({ ...form, date: new Date().toISOString().slice(0, 10) })
+      await saveDiary(form)
       const list = await loadDiaries()
       setEntries(list)
       if (list.length) setActive(list[0].id)
