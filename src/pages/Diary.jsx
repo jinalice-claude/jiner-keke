@@ -17,6 +17,19 @@ async function saveDiary({ title, content }) {
   return res.json()
 }
 
+async function updateDiary(id, { title, content }) {
+  const res = await fetch(`${BASE}/api/public/update`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      bucket_id: id,
+      content: `【日记】${title}\n\n${content}`,
+    }),
+  })
+  if (!res.ok) throw new Error(`${res.status}`)
+  return res.json()
+}
+
 async function deleteDiary(id) {
   const res = await fetch(`${BASE}/api/public/delete`, {
     method: 'POST',
@@ -55,7 +68,9 @@ export default function Diary() {
   const [active, setActive] = useState(null)
   const [loading, setLoading] = useState(true)
   const [writing, setWriting] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ title: '', content: '' })
+  const [editForm, setEditForm] = useState({ title: '', content: '' })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -76,6 +91,13 @@ export default function Diary() {
 
   const current = entries.find(e => e.id === active)
 
+  function startEdit() {
+    if (!current) return
+    setEditForm({ title: current.title, content: current.content })
+    setEditing(true)
+    setConfirmDelete(false)
+  }
+
   async function handleSave() {
     if (!form.title.trim() || !form.content.trim()) return
     setSaving(true)
@@ -83,6 +105,20 @@ export default function Diary() {
       await saveDiary(form)
       setWriting(false)
       setForm({ title: '', content: '' })
+      load()
+    } catch {
+      alert('保存失败，请重试')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleUpdate() {
+    if (!editForm.title.trim() || !editForm.content.trim()) return
+    setSaving(true)
+    try {
+      await updateDiary(active, editForm)
+      setEditing(false)
       load()
     } catch {
       alert('保存失败，请重试')
@@ -110,13 +146,13 @@ export default function Diary() {
     <div className={styles.page}>
       <aside className={styles.sidebar}>
         <p className={styles.sidebarTitle}>日记本</p>
-        <button onClick={() => setWriting(true)} style={{ margin: '0 16px 12px', padding: '8px 0', width: 'calc(100% - 32px)', background: 'var(--ink)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
+        <button onClick={() => { setWriting(true); setEditing(false) }} style={{ margin: '0 16px 12px', padding: '8px 0', width: 'calc(100% - 32px)', background: 'var(--ink)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
           + 写日记
         </button>
         {loading ? <p style={{ padding: '12px 16px', fontSize: '13px', opacity: 0.5 }}>加载中…</p> : (
           <ul className={styles.list}>
             {entries.map(e => (
-              <li key={e.id} className={[styles.item, active === e.id ? styles.itemActive : ''].join(' ')} onClick={() => { setActive(e.id); setWriting(false); setConfirmDelete(false) }}>
+              <li key={e.id} className={[styles.item, active === e.id ? styles.itemActive : ''].join(' ')} onClick={() => { setActive(e.id); setWriting(false); setEditing(false); setConfirmDelete(false) }}>
                 <span className={styles.itemDate}>{formatDate(e.date)}</span>
                 <span className={styles.itemTitle}>{e.title}</span>
               </li>
@@ -134,6 +170,15 @@ export default function Diary() {
               <button onClick={() => setWriting(false)} style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>取消</button>
             </div>
           </div>
+        ) : editing && current ? (
+          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} style={{ fontSize: '18px', fontWeight: 600, border: 'none', borderBottom: '1px solid #ddd', padding: '8px 0', outline: 'none', background: 'transparent' }} />
+            <textarea value={editForm.content} onChange={e => setEditForm(f => ({ ...f, content: e.target.value }))} rows={14} style={{ fontSize: '15px', lineHeight: '1.8', border: '1px solid #eee', borderRadius: '8px', padding: '12px', outline: 'none', resize: 'vertical', background: 'transparent' }} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={handleUpdate} disabled={saving} style={{ padding: '8px 20px', background: 'var(--ink)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>{saving ? '保存中…' : '保存修改'}</button>
+              <button onClick={() => setEditing(false)} style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>取消</button>
+            </div>
+          </div>
         ) : current ? (
           <>
             <p className={styles.entryDate}>{formatDate(current.date)}</p>
@@ -141,19 +186,20 @@ export default function Diary() {
             <div className={styles.entryBody}>
               {current.content.trim().split('\n').map((line, i) => line === '' ? <br key={i} /> : <p key={i}>{line}</p>)}
             </div>
-            <div style={{ marginTop: '32px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
+            <div style={{ marginTop: '32px', paddingTop: '16px', borderTop: '1px solid #eee', display: 'flex', gap: '8px', alignItems: 'center' }}>
               {confirmDelete ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <>
                   <span style={{ fontSize: '13px', opacity: 0.6 }}>确定删除这篇日记？</span>
                   <button onClick={handleDelete} disabled={deleting} style={{ padding: '6px 16px', background: '#e74c3c', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
                     {deleting ? '删除中…' : '确定'}
                   </button>
                   <button onClick={() => setConfirmDelete(false)} style={{ padding: '6px 16px', background: 'transparent', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>取消</button>
-                </div>
+                </>
               ) : (
-                <button onClick={() => setConfirmDelete(true)} style={{ padding: '6px 16px', background: 'transparent', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', opacity: 0.5 }}>
-                  删除
-                </button>
+                <>
+                  <button onClick={startEdit} style={{ padding: '6px 16px', background: 'transparent', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', opacity: 0.6 }}>编辑</button>
+                  <button onClick={() => setConfirmDelete(true)} style={{ padding: '6px 16px', background: 'transparent', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', opacity: 0.5 }}>删除</button>
+                </>
               )}
             </div>
           </>
