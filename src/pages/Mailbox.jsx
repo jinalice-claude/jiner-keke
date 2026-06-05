@@ -4,21 +4,21 @@ import styles from './Mailbox.module.css'
 const BASE = import.meta.env.VITE_OMBRE_MCP_URL || ''
 
 async function loadLetters() {
-  const res = await fetch(`${BASE}/api/public/breath`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: 'letter', max_tokens: 8000 }),
-  })
+  const res = await fetch(`${BASE}/api/public/list?tag=letter`)
   if (!res.ok) throw new Error(`API error ${res.status}`)
   const data = await res.json()
-  const text = data?.result || ''
-  const blocks = text.split('---').map(s => s.trim()).filter(Boolean)
-  return blocks.filter(b => b.includes('letter')).map((b, i) => ({
-    id: `letter-${i}`,
-    subject: b.match(/【信】([^\n]+)/)?.[1] || `信件 ${i + 1}`,
-    content: b.replace(/\[.*?\]/g, '').replace(/【信】[^\n]+/, '').trim(),
-    date: new Date().toISOString().slice(0, 10),
-  }))
+  return data.map((b, i) => {
+    const content = b.content || ''
+    const subjectMatch = content.match(/【信】([^\n]+)/)
+    const subject = subjectMatch?.[1] || `信件 ${i + 1}`
+    const body = content.replace(/【信】[^\n]+/, '').trim()
+    return {
+      id: b.id,
+      subject,
+      content: body,
+      date: b.created ? b.created.slice(0, 10) : '',
+    }
+  })
 }
 
 async function saveLetter({ subject, content }) {
@@ -36,6 +36,7 @@ async function saveLetter({ subject, content }) {
 }
 
 function formatDate(str) {
+  if (!str) return ''
   const d = new Date(str)
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
