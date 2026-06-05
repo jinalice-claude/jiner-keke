@@ -17,6 +17,16 @@ async function saveDiary({ title, content }) {
   return res.json()
 }
 
+async function deleteDiary(id) {
+  const res = await fetch(`${BASE}/api/public/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bucket_id: id }),
+  })
+  if (!res.ok) throw new Error(`${res.status}`)
+  return res.json()
+}
+
 async function loadDiaries() {
   const res = await fetch(`${BASE}/api/public/list?tag=diary`)
   if (!res.ok) throw new Error(`${res.status}`)
@@ -47,6 +57,8 @@ export default function Diary() {
   const [writing, setWriting] = useState(false)
   const [form, setForm] = useState({ title: '', content: '' })
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   function load() {
     if (!BASE) { setLoading(false); return }
@@ -79,6 +91,21 @@ export default function Diary() {
     }
   }
 
+  async function handleDelete() {
+    if (!active) return
+    setDeleting(true)
+    try {
+      await deleteDiary(active)
+      setConfirmDelete(false)
+      setActive(null)
+      load()
+    } catch {
+      alert('删除失败，请重试')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className={styles.page}>
       <aside className={styles.sidebar}>
@@ -89,7 +116,7 @@ export default function Diary() {
         {loading ? <p style={{ padding: '12px 16px', fontSize: '13px', opacity: 0.5 }}>加载中…</p> : (
           <ul className={styles.list}>
             {entries.map(e => (
-              <li key={e.id} className={[styles.item, active === e.id ? styles.itemActive : ''].join(' ')} onClick={() => { setActive(e.id); setWriting(false) }}>
+              <li key={e.id} className={[styles.item, active === e.id ? styles.itemActive : ''].join(' ')} onClick={() => { setActive(e.id); setWriting(false); setConfirmDelete(false) }}>
                 <span className={styles.itemDate}>{formatDate(e.date)}</span>
                 <span className={styles.itemTitle}>{e.title}</span>
               </li>
@@ -113,6 +140,21 @@ export default function Diary() {
             <h2 className={styles.entryTitle}>{current.title}</h2>
             <div className={styles.entryBody}>
               {current.content.trim().split('\n').map((line, i) => line === '' ? <br key={i} /> : <p key={i}>{line}</p>)}
+            </div>
+            <div style={{ marginTop: '32px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
+              {confirmDelete ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '13px', opacity: 0.6 }}>确定删除这篇日记？</span>
+                  <button onClick={handleDelete} disabled={deleting} style={{ padding: '6px 16px', background: '#e74c3c', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                    {deleting ? '删除中…' : '确定'}
+                  </button>
+                  <button onClick={() => setConfirmDelete(false)} style={{ padding: '6px 16px', background: 'transparent', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>取消</button>
+                </div>
+              ) : (
+                <button onClick={() => setConfirmDelete(true)} style={{ padding: '6px 16px', background: 'transparent', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', opacity: 0.5 }}>
+                  删除
+                </button>
+              )}
             </div>
           </>
         ) : (
