@@ -2,10 +2,11 @@ import { NavLink, Outlet } from 'react-router-dom'
 import styles from './Layout.module.css'
 
 const NAV = [
-  { to: '/',         label: '首页'     },
-  { to: '/diary',    label: '日记本'   },
-  { to: '/memories', label: '记忆碎片' },
-  { to: '/mailbox',  label: '信箱'     },
+  { to: '/',          label: '首页'     },
+  { to: '/diary',     label: '日记本'   },
+  { to: '/memories',  label: '记忆碎片' },
+  { to: '/mailbox',   label: '信箱'     },
+  { to: '/farewell',  label: '告别'     },
 ]
 
 export default function Layout() {
