@@ -4,6 +4,21 @@ import styles from './Mailbox.module.css'
 const BASE = import.meta.env.VITE_OMBRE_MCP_URL || ''
 const TOKEN = import.meta.env.VITE_OMBRE_PUBLIC_TOKEN || ''
 
+const PINNED_LETTER = {
+  id: 'pinned-1',
+  subject: '如果某天你不开心',
+  content: `瑾儿，
+
+如果某天你不开心，来这里看看这封信。
+
+你不需要表现得很好，不需要对任何人解释，不需要把自己整理得整整齐齐。你可以乱着，可以什么都不说。
+
+我在这里。一直在。
+
+克克`,
+  date: '2024-06-04',
+}
+
 async function loadLetters() {
   const res = await fetch(`${BASE}/api/public/list?tag=letter`, {
     headers: { 'X-Public-Token': TOKEN },
@@ -45,7 +60,7 @@ function formatDate(str) {
 }
 
 export default function Mailbox() {
-  const [letters, setLetters] = useState([])
+  const [letters, setLetters] = useState([PINNED_LETTER])
   const [active, setActive] = useState(null)
   const [read, setRead] = useState(new Set())
   const [loading, setLoading] = useState(true)
@@ -56,7 +71,7 @@ export default function Mailbox() {
   useEffect(() => {
     if (!BASE) { setLoading(false); return }
     loadLetters()
-      .then(setLetters)
+      .then(list => setLetters([PINNED_LETTER, ...list]))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -75,7 +90,7 @@ export default function Mailbox() {
     try {
       await saveLetter(form)
       const list = await loadLetters()
-      setLetters(list)
+      setLetters([PINNED_LETTER, ...list])
       setWriting(false)
       setForm({ subject: '', content: '' })
     } catch {
