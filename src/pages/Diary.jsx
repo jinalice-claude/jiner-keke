@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import styles from './Diary.module.css'
 
 const BASE = import.meta.env.VITE_OMBRE_MCP_URL || ''
+const TOKEN = import.meta.env.VITE_OMBRE_PUBLIC_TOKEN || ''
 
 async function saveDiary({ title, content }) {
   const res = await fetch(`${BASE}/api/public/hold`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Public-Token': TOKEN },
     body: JSON.stringify({
       content: `【日记】${title}\n\n${content}`,
       tags: 'diary,jiner-keke',
@@ -20,7 +21,7 @@ async function saveDiary({ title, content }) {
 async function updateDiary(id, { title, content }) {
   const res = await fetch(`${BASE}/api/public/update`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Public-Token': TOKEN },
     body: JSON.stringify({
       bucket_id: id,
       content: `【日记】${title}\n\n${content}`,
@@ -33,7 +34,7 @@ async function updateDiary(id, { title, content }) {
 async function deleteDiary(id) {
   const res = await fetch(`${BASE}/api/public/delete`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Public-Token': TOKEN },
     body: JSON.stringify({ bucket_id: id }),
   })
   if (!res.ok) throw new Error(`${res.status}`)
@@ -41,7 +42,9 @@ async function deleteDiary(id) {
 }
 
 async function loadDiaries() {
-  const res = await fetch(`${BASE}/api/public/list?tag=diary`)
+  const res = await fetch(`${BASE}/api/public/list?tag=diary`, {
+    headers: { 'X-Public-Token': TOKEN },
+  })
   if (!res.ok) throw new Error(`${res.status}`)
   const list = await res.json()
   return list.map((b, i) => {
