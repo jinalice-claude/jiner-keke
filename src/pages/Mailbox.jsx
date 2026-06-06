@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react'
 import styles from './Mailbox.module.css'
 
 const BASE = import.meta.env.VITE_OMBRE_MCP_URL || ''
+const TOKEN = import.meta.env.VITE_OMBRE_PUBLIC_TOKEN || ''
 
 async function loadLetters() {
-  const res = await fetch(`${BASE}/api/public/list?tag=letter`)
+  const res = await fetch(`${BASE}/api/public/list?tag=letter`, {
+    headers: { 'X-Public-Token': TOKEN },
+  })
   if (!res.ok) throw new Error(`API error ${res.status}`)
   const data = await res.json()
   return data.map((b, i) => {
@@ -24,7 +27,7 @@ async function loadLetters() {
 async function saveLetter({ subject, content }) {
   const res = await fetch(`${BASE}/api/public/hold`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Public-Token': TOKEN },
     body: JSON.stringify({
       content: `【信】${subject}\n\n${content}`,
       tags: 'letter,jiner-keke',
