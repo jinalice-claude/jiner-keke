@@ -1,6 +1,32 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { PageShell, Moon } from '../components/WarmKit'
 import { THEME as T } from '../theme'
+
+const BASE  = import.meta.env.VITE_OMBRE_MCP_URL    || ''
+const TOKEN = import.meta.env.VITE_OMBRE_PUBLIC_TOKEN || ''
+
+async function loadLatest() {
+  const res = await fetch(`${BASE}/api/public/list?tag=diary`, {
+    headers: { 'X-Public-Token': TOKEN },
+  })
+  if (!res.ok) throw new Error(`${res.status}`)
+  const data = await res.json()
+  return data
+    .sort((a, b) => new Date(b.created) - new Date(a.created))
+    .slice(0, 3)
+    .map(b => {
+      const raw     = (b.content || '').split('\n').filter(Boolean)[0] || ''
+      const preview = raw.length > 40 ? raw.slice(0, 38) + '…' : raw
+      return { id: b.id, preview, date: b.created || '' }
+    })
+}
+
+function fmtDate(str) {
+  if (!str) return ''
+  const d = new Date(str)
+  return `${String(d.getMonth() + 1).padStart(2, '0')} / ${String(d.getDate()).padStart(2, '0')}`
+}
 
 function SealLines() {
   return (
@@ -40,13 +66,15 @@ function HintDot({ txt, c }) {
   )
 }
 
-const lately = [
-  { date: '05 / 31', text: '今天的晚饭很简单，可我们聊到很晚很晚。', tag: '日记',   glow: T.accent },
-  { date: '05 / 27', text: '路过那家花店，又想起你随口说过的那句话。', tag: '碎片', glow: T.rose   },
-  { date: '05 / 20', text: '写了一封还没舍得寄出去的信。',               tag: '信箱', glow: T.accent },
-]
-
 export default function Home() {
+  const [lately, setLately]           = useState([])
+  const [latelyLoading, setLatelyLoading] = useState(true)
+
+  useEffect(() => {
+    if (!BASE) { setLatelyLoading(false); return }
+    loadLatest().then(setLately).catch(() => {}).finally(() => setLatelyLoading(false))
+  }, [])
+
   return (
     <PageShell>
 
@@ -146,19 +174,33 @@ export default function Home() {
           <Link to="/diary" style={{ fontSize: 13, color: T.dim, textDecoration: 'none' }}>查看全部 →</Link>
         </div>
 
-        {lately.map((e, i) => (
-          <div key={e.date} className="lately-row" style={{
-            display: 'grid', gridTemplateColumns: '78px 1fr auto',
-            alignItems: 'center', gap: 18, padding: '15px 0',
-            borderTop: i === 0 ? 'none' : '1px solid rgba(255,232,212,0.1)',
-          }}>
-            <span className="lately-date" style={{ fontFamily: T.latin, fontSize: 17, letterSpacing: 1, color: T.accent, fontVariantNumeric: 'tabular-nums' }}>{e.date}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 11, fontSize: 15, color: T.cream }}>
-              <span style={{ width: 5, height: 5, flexShrink: 0, borderRadius: 3, background: e.glow, boxShadow: `0 0 8px ${e.glow}` }} />
-              {e.text}
-            </span>
-            <span style={{ fontSize: 12, color: T.dim, padding: '4px 11px', borderRadius: 11, whiteSpace: 'nowrap', border: '1px solid rgba(255,232,212,0.16)' }}>{e.tag}</span>
+        {latelyLoading && (
+          <div style={{ padding: '18px 0', fontFamily: T.hand, fontSize: 18, color: `${T.dim}88` }}>
+            正在想起 …
           </div>
+        )}
+        {!latelyLoading && lately.length === 0 && (
+          <div style={{ padding: '18px 0', fontFamily: T.hand, fontSize: 18, color: `${T.dim}88` }}>
+            还没有日记，去日记本写下第一篇 …
+          </div>
+        )}
+        {!latelyLoading && lately.map((e, i) => (
+          <Link key={e.id} to="/diary" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="lately-row" style={{
+              display: 'grid', gridTemplateColumns: '78px 1fr auto',
+              alignItems: 'center', gap: 18, padding: '15px 0',
+              borderTop: i === 0 ? 'none' : '1px solid rgba(255,232,212,0.1)',
+            }}>
+              <span className="lately-date" style={{ fontFamily: T.latin, fontSize: 17, letterSpacing: 1, color: T.accent, fontVariantNumeric: 'tabular-nums' }}>
+                {fmtDate(e.date)}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 11, fontSize: 15, color: T.cream }}>
+                <span style={{ width: 5, height: 5, flexShrink: 0, borderRadius: 3, background: T.accent, boxShadow: `0 0 8px ${T.accent}` }} />
+                {e.preview}
+              </span>
+              <span style={{ fontSize: 12, color: T.dim, padding: '4px 11px', borderRadius: 11, whiteSpace: 'nowrap', border: '1px solid rgba(255,232,212,0.16)' }}>日记</span>
+            </div>
+          </Link>
         ))}
 
         <div style={{ paddingTop: 14, fontFamily: T.hand, fontSize: 19, color: `${T.dim}cc`, letterSpacing: 1, textAlign: 'center' }}>
