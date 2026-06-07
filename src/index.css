@@ -20,6 +20,21 @@
   --radius-lg:   20px;
 }
 
+/* ── 暖夜微光 animations ────────────────────────── */
+@keyframes corner-drift {
+  0%, 100% { transform: translate(0, 0); }
+  33%       { transform: translate(18px, -14px); }
+  66%       { transform: translate(-12px, 10px); }
+}
+@keyframes mote-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
+}
+@keyframes lantern-glow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
 /* ── Reset ─────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; }

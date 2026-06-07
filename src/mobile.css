@@ -1,0 +1,39 @@
+/* mobile.css — 暖夜微光 整站移动端适配（窄屏覆盖内联样式）*/
+@media (max-width: 760px) {
+  .sk-wrap { padding: 24px 16px 30px !important; }
+
+  /* 顶部：标题与导航分两行，导航可换行 */
+  .sk-header { flex-direction: column !important; align-items: flex-start !important; gap: 14px !important; }
+  .sk-header .sk-brand { font-size: 19px !important; }
+  .sk-nav { flex-wrap: wrap !important; gap: 6px !important; }
+  .sk-nav a, .sk-nav span { font-size: 13px !important; padding: 6px 12px !important; }
+
+  /* 标题 */
+  .hero-title { font-size: 38px !important; letter-spacing: 2px !important; }
+  .hero-section { padding: 44px 0 40px !important; }
+  .sk-h1 { font-size: 34px !important; }
+  .page-head { padding: 38px 0 24px !important; }
+
+  /* 网格全部塌成单列 */
+  .bento { grid-template-columns: 1fr !important; grid-auto-rows: auto !important; }
+  .bento > * { grid-column: auto !important; grid-row: auto !important; min-height: 116px !important; }
+  .grid-2 { grid-template-columns: 1fr !important; }
+  .cols-2, .cols-3 { column-count: 1 !important; }
+
+  /* 卡片内边距收一点 */
+  .pad-card { padding: 24px 22px !important; }
+  .arch-card { border-radius: 140px 140px 20px 20px !important; padding: 40px 26px !important; }
+
+  /* 最近的夜晚 / 字句日期列收窄 */
+  .lately-row { grid-template-columns: 60px 1fr auto !important; gap: 12px !important; }
+}
+
+@keyframes bubble-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@media (prefers-reduced-motion: reduce) { [style*="bubble-bob"] { animation: none !important; } }
+
+@media (max-width: 420px) {
+  .hero-title { font-size: 32px !important; }
+  .sk-h1 { font-size: 30px !important; }
+  .lately-row { grid-template-columns: 1fr auto !important; }
+  .lately-row .lately-date { display: none !important; }
+}
