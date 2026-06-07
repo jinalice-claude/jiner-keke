@@ -28,12 +28,31 @@ async function saveMemory(content) {
   return res.json()
 }
 
+async function updateMemory(id, content) {
+  const res = await fetch(`${BASE}/api/public/update`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Public-Token': TOKEN },
+    body: JSON.stringify({ bucket_id: id, content }),
+  })
+  if (!res.ok) throw new Error(`${res.status}`)
+  return res.json()
+}
+
+async function deleteMemory(id) {
+  const res = await fetch(`${BASE}/api/public/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Public-Token': TOKEN },
+    body: JSON.stringify({ bucket_id: id }),
+  })
+  if (!res.ok) throw new Error(`${res.status}`)
+  return res.json()
+}
+
 function bubbleDate(str) {
   const d = new Date(str)
   return `${String(d.getMonth() + 1).padStart(2, '0')}·${String(d.getDate()).padStart(2, '0')}`
 }
 
-// 每个泡泡的视觉参数，按索引循环
 const BUBBLE_PARAMS = [
   { size: 196, offset:  0, dur: 7.0 },
   { size: 184, offset: 42, dur: 8.0 },
@@ -45,46 +64,52 @@ const BUBBLE_PARAMS = [
   { size: 164, offset: 48, dur: 6.8 },
 ]
 
-function bubbleStyle(size, glow, offset, dur) {
+function bubbleBase(size, glow, offset, dur) {
   return {
     width: size, height: size, borderRadius: '50%', flexShrink: 0, marginTop: offset,
     background: `radial-gradient(circle at 42% 36%, rgba(255,240,225,0.10) 0%, rgba(255,240,225,0.04) 52%, transparent 74%)`,
-    border: `1px solid ${glow}3a`,
-    boxShadow: `0 1px 0 rgba(255,240,225,0.1) inset, 0 14px 36px rgba(20,12,10,0.3), 0 0 30px ${glow}33`,
     backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
     display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24,
     animation: `bubble-bob ${dur}s ease-in-out infinite`,
+    cursor: 'pointer', transition: 'border 0.2s, box-shadow 0.2s',
   }
 }
 
-// 文字泡泡
-function TextBubble({ size, glow, offset, dur, date, children }) {
+function TextBubble({ size, glow, offset, dur, date, content, selected, onClick }) {
+  const preview = content.length > 18 ? content.slice(0, 16) + '…' : content
   return (
-    <div style={bubbleStyle(size, glow, offset, dur)}>
+    <div
+      onClick={onClick}
+      style={{
+        ...bubbleBase(size, glow, offset, dur),
+        animationPlayState: selected ? 'paused' : 'running',
+        border: selected ? `2px solid ${glow}88` : `1px solid ${glow}3a`,
+        boxShadow: selected
+          ? `0 1px 0 rgba(255,240,225,0.1) inset, 0 14px 36px rgba(20,12,10,0.3), 0 0 44px ${glow}55`
+          : `0 1px 0 rgba(255,240,225,0.1) inset, 0 14px 36px rgba(20,12,10,0.3), 0 0 30px ${glow}33`,
+      }}
+    >
       <div>
         <div style={{ fontFamily: T.latin, fontSize: 14, letterSpacing: 2, color: glow, marginBottom: 8 }}>{date}</div>
-        <p style={{ fontFamily: T.serif, fontSize: size > 200 ? 18 : 16, fontWeight: 500, lineHeight: 1.7, margin: 0, color: '#F8EEDF', letterSpacing: 1 }}>
-          {children}
+        <p style={{ fontFamily: T.serif, fontSize: size > 200 ? 16 : 14, fontWeight: 500, lineHeight: 1.65, margin: 0, color: '#F8EEDF', letterSpacing: 1 }}>
+          {preview}
         </p>
+        {selected && (
+          <div style={{ fontSize: 11, color: `${glow}99`, marginTop: 8, letterSpacing: 1 }}>戳开了 ↓</div>
+        )}
       </div>
     </div>
   )
 }
 
-// 照片泡泡（img 占位，src 留空供瑾儿之后填）
 function PhotoBubble({ src = '', cap, size, glow, offset, dur }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginTop: offset,
-      animation: `bubble-bob ${dur}s ease-in-out infinite` }}>
-      <div style={{ width: size, height: size, borderRadius: '50%', padding: 6,
-        border: `1px solid ${glow}3a`, boxShadow: `0 14px 36px rgba(20,12,10,0.3), 0 0 28px ${glow}33`,
-        background: 'rgba(255,240,225,0.04)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginTop: offset, animation: `bubble-bob ${dur}s ease-in-out infinite` }}>
+      <div style={{ width: size, height: size, borderRadius: '50%', padding: 6, border: `1px solid ${glow}3a`, boxShadow: `0 14px 36px rgba(20,12,10,0.3), 0 0 28px ${glow}33`, background: 'rgba(255,240,225,0.04)', overflow: 'hidden' }}>
         {src ? (
           <img src={src} alt={cap || ''} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
         ) : (
-          // 空占位：虚线圆 + 提示文字
-          <div style={{ width: '100%', height: '100%', borderRadius: '50%', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,232,212,0.28)' }}>
+          <div style={{ width: '100%', height: '100%', borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,232,212,0.28)' }}>
             <div style={{ fontSize: 22, color: `${T.accent}88`, lineHeight: 1 }}>📷</div>
             <div style={{ fontFamily: T.hand, fontSize: 14, color: `${T.dim}88`, marginTop: 4 }}>照片占位</div>
           </div>
@@ -100,13 +125,26 @@ const inputStyle = {
   borderRadius: 10, padding: '10px 14px', color: T.cream, fontFamily: T.sans,
   fontSize: 15, outline: 'none', width: '100%', boxSizing: 'border-box',
 }
+const btnPrimary = {
+  padding: '10px 26px', background: T.accent, color: '#2D2128', border: 'none',
+  borderRadius: 20, cursor: 'pointer', fontFamily: T.serif, fontSize: 15, fontWeight: 500,
+}
+const btnSecondary = {
+  padding: '10px 22px', background: 'rgba(255,240,225,0.06)', color: T.dim,
+  border: '1px solid rgba(255,232,212,0.2)', borderRadius: 20, cursor: 'pointer', fontSize: 14,
+}
 
 export default function Memories() {
-  const [memories, setMemories] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [writing, setWriting]   = useState(false)
-  const [text, setText]         = useState('')
-  const [saving, setSaving]     = useState(false)
+  const [memories, setMemories]       = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [writing, setWriting]         = useState(false)
+  const [text, setText]               = useState('')
+  const [saving, setSaving]           = useState(false)
+  const [selected, setSelected]       = useState(null)
+  const [editingId, setEditingId]     = useState(null)
+  const [editText, setEditText]       = useState('')
+  const [confirmDelId, setConfirmDelId] = useState(null)
+  const [actioning, setActioning]     = useState(false)
 
   function load() {
     if (!BASE) { setLoading(false); return }
@@ -128,6 +166,40 @@ export default function Memories() {
     finally { setSaving(false) }
   }
 
+  async function handleUpdate() {
+    if (!editText.trim() || !editingId) return
+    setActioning(true)
+    try {
+      await updateMemory(editingId, editText.trim())
+      setEditingId(null)
+      setEditText('')
+      load()
+    } catch { alert('保存失败，请重试') }
+    finally { setActioning(false) }
+  }
+
+  async function handleDelete() {
+    if (!confirmDelId) return
+    setActioning(true)
+    try {
+      await deleteMemory(confirmDelId)
+      setConfirmDelId(null)
+      setSelected(null)
+      load()
+    } catch { alert('删除失败，请重试') }
+    finally { setActioning(false) }
+  }
+
+  function toggleSelect(id) {
+    setSelected(prev => prev === id ? null : id)
+    setEditingId(null)
+    setEditText('')
+    setConfirmDelId(null)
+    setWriting(false)
+  }
+
+  const selectedMem = memories.find(m => m.id === selected)
+
   return (
     <PageShell>
       <PageHead
@@ -136,8 +208,7 @@ export default function Memories() {
         meta={memories.length ? <span>已收藏 {memories.length} 片</span> : null}
       />
 
-      {/* 写碎片表单 */}
-      {writing ? (
+      {writing && (
         <div style={{ ...T.glass, borderRadius: 20, padding: '28px 30px', marginBottom: 24 }}>
           <textarea
             placeholder="写下这一刻 …"
@@ -148,21 +219,15 @@ export default function Memories() {
             autoFocus
           />
           <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-            <button onClick={handleSave} disabled={saving} style={{
-              padding: '10px 26px', background: T.accent, color: '#2D2128', border: 'none',
-              borderRadius: 20, cursor: 'pointer', fontFamily: T.serif, fontSize: 15, fontWeight: 500,
-            }}>
+            <button onClick={handleSave} disabled={saving} style={btnPrimary}>
               {saving ? '收好了 …' : '收下来'}
             </button>
-            <button onClick={() => { setWriting(false); setText('') }} style={{
-              padding: '10px 22px', background: 'rgba(255,240,225,0.06)', color: T.dim,
-              border: '1px solid rgba(255,232,212,0.2)', borderRadius: 20, cursor: 'pointer', fontSize: 14,
-            }}>
+            <button onClick={() => { setWriting(false); setText('') }} style={btnSecondary}>
               取消
             </button>
           </div>
         </div>
-      ) : null}
+      )}
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '60px 0', fontFamily: T.hand, fontSize: 22, color: T.dim }}>
@@ -171,39 +236,88 @@ export default function Memories() {
       )}
 
       {!loading && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start', gap: 28, padding: '20px 0 10px' }}>
+        <>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start', gap: 28, padding: '20px 0 10px' }}>
 
-          {/* 照片泡泡占位（固定位置，瑾儿之后可填入 src） */}
-          <PhotoBubble size={196} glow={T.accent} offset={0}  dur={7}   cap="窗台上的那束花" />
+            <PhotoBubble size={196} glow={T.accent} offset={0}  dur={7}   cap="窗台上的那束花" />
 
-          {/* API 文字碎片 */}
-          {memories.map((m, i) => {
-            const p    = BUBBLE_PARAMS[i % BUBBLE_PARAMS.length]
-            const glow = i % 2 === 0 ? T.accent : T.rose
-            // 每隔 3 个文字泡泡插入一个照片占位
-            const showPhoto = i > 0 && i % 3 === 0
-            return (
-              <TextBubble key={m.id} size={p.size} glow={glow} offset={p.offset} dur={p.dur} date={bubbleDate(m.date)}>
-                {m.content.length > 60 ? m.content.slice(0, 58) + '…' : m.content}
-              </TextBubble>
-            )
-          })}
+            {memories.map((m, i) => {
+              const p    = BUBBLE_PARAMS[i % BUBBLE_PARAMS.length]
+              const glow = i % 2 === 0 ? T.accent : T.rose
+              return (
+                <TextBubble
+                  key={m.id}
+                  size={p.size} glow={glow} offset={p.offset} dur={p.dur}
+                  date={bubbleDate(m.date)}
+                  content={m.content}
+                  selected={selected === m.id}
+                  onClick={() => toggleSelect(m.id)}
+                />
+              )
+            })}
 
-          {/* 第二个照片占位 */}
-          <PhotoBubble size={176} glow={T.rose}   offset={6}  dur={8.5} cap="一起做的晚饭" />
+            <PhotoBubble size={176} glow={T.rose} offset={6} dur={8.5} cap="一起做的晚饭" />
 
-          {/* 续收泡泡 */}
-          <div onClick={() => setWriting(true)} style={{
-            width: 156, height: 156, borderRadius: '50%', marginTop: 18, flexShrink: 0, cursor: 'pointer',
-            border: '1px dashed rgba(255,232,212,0.26)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            color: `${T.dim}cc`, animation: 'bubble-bob 7.8s ease-in-out infinite',
-          }}>
-            <div style={{ fontSize: 26, color: T.accent, lineHeight: 1 }}>+</div>
-            <div style={{ fontFamily: T.hand, fontSize: 18, marginTop: 4 }}>再收一片</div>
+            <div onClick={() => { setWriting(true); setSelected(null); setEditingId(null) }} style={{
+              width: 156, height: 156, borderRadius: '50%', marginTop: 18, flexShrink: 0, cursor: 'pointer',
+              border: '1px dashed rgba(255,232,212,0.26)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              color: `${T.dim}cc`, animation: 'bubble-bob 7.8s ease-in-out infinite',
+            }}>
+              <div style={{ fontSize: 26, color: T.accent, lineHeight: 1 }}>+</div>
+              <div style={{ fontFamily: T.hand, fontSize: 18, marginTop: 4 }}>再收一片</div>
+            </div>
+
           </div>
 
-        </div>
+          {/* 展开详情面板 */}
+          {selected && selectedMem && (
+            <div style={{ ...T.glass, borderRadius: 20, padding: '28px 30px', marginTop: 28 }}>
+              {editingId === selected ? (
+                <>
+                  <textarea
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    rows={5}
+                    style={{ ...inputStyle, lineHeight: 1.8, resize: 'vertical' }}
+                    autoFocus
+                  />
+                  <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                    <button onClick={handleUpdate} disabled={actioning} style={btnPrimary}>
+                      {actioning ? '保存中 …' : '保存'}
+                    </button>
+                    <button onClick={() => { setEditingId(null); setEditText('') }} style={btnSecondary}>取消</button>
+                  </div>
+                </>
+              ) : confirmDelId === selected ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                  <span style={{ flex: 1, fontFamily: T.sans, fontSize: 15, color: T.dim }}>确定删除这片记忆？</span>
+                  <button onClick={handleDelete} disabled={actioning} style={{ ...btnPrimary, background: '#C07070', padding: '8px 20px' }}>
+                    {actioning ? '删除中 …' : '确定删除'}
+                  </button>
+                  <button onClick={() => setConfirmDelId(null)} style={btnSecondary}>取消</button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontFamily: T.latin, fontSize: 13, color: T.accent, letterSpacing: 2, marginBottom: 14 }}>
+                    {bubbleDate(selectedMem.date)}
+                  </div>
+                  <p style={{ fontFamily: T.serif, fontSize: 18, lineHeight: 1.85, color: T.cream, whiteSpace: 'pre-wrap', margin: '0 0 20px' }}>
+                    {selectedMem.content}
+                  </p>
+                  <div style={{ display: 'flex', gap: 14 }}>
+                    <button onClick={() => { setEditingId(selected); setEditText(selectedMem.content) }} style={btnPrimary}>
+                      编辑
+                    </button>
+                    <button onClick={() => setConfirmDelId(selected)} style={{ ...btnSecondary, color: '#C07070', borderColor: 'rgba(200,80,80,0.28)' }}>
+                      删除
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {!loading && memories.length === 0 && !writing && (
