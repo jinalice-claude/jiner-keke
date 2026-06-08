@@ -67,12 +67,8 @@ function HintDot({ txt, c }) {
   )
 }
 
-function fmt(d) {
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-}
-
 export default function Home() {
-  const { days, anniversary } = useDayCount()
+  const { days } = useDayCount()
   const [lately, setLately]           = useState([])
   const [latelyLoading, setLatelyLoading] = useState(true)
 
@@ -98,34 +94,12 @@ export default function Home() {
         <p style={{ fontFamily: T.hand, fontSize: 27, color: T.dim, marginTop: 18, letterSpacing: 2, minHeight: 34 }}>
           像一盏不灭的小灯，给晚归的人留着
         </p>
+        <p style={{ marginTop: 20, fontSize: 14.5, letterSpacing: '0.05em', color: T.dim, minHeight: 22 }}>
+          我在这里，一直在 · 第{' '}
+          <span style={{ color: T.accent, textShadow: `0 0 10px ${T.accent}55` }}>{days}</span>
+          {' '}天
+        </p>
       </section>
-
-      {/* ── 天数卡片 ── */}
-      <div style={{
-        width: 152, margin: '0 auto 36px',
-        borderRadius: 14, overflow: 'hidden',
-        border: '1px solid rgba(255,232,212,0.18)',
-        boxShadow: '0 8px 28px rgba(20,12,10,0.4)',
-        background: 'rgba(28,16,10,0.72)',
-        backdropFilter: 'blur(12px)',
-      }}>
-        <div style={{ height: 10, background: T.accent, opacity: 0.9 }} />
-        <div style={{ textAlign: 'center', padding: '18px 24px 16px' }}>
-          <div style={{
-            fontFamily: T.serif, fontSize: 54, fontWeight: 300,
-            color: T.accent, lineHeight: 1,
-            textShadow: `0 0 20px ${T.accent}66`,
-          }}>
-            {days}
-          </div>
-          <div style={{ marginTop: 10, fontSize: 11.5, letterSpacing: '0.12em', color: T.cream }}>
-            在一起的第 {days} 天
-          </div>
-          <div style={{ marginTop: 6, fontSize: 10, letterSpacing: '0.1em', color: T.dim }}>
-            从 {fmt(anniversary)} 起
-          </div>
-        </div>
-      </div>
 
       {/* bento */}
       <div className="bento" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gridAutoRows: '168px', gap: 20 }}>

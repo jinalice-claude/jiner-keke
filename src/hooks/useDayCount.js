@@ -9,7 +9,7 @@ export function useDayCount() {
   useEffect(() => {
     function calc() {
       const diff = Date.now() - ANNIVERSARY.getTime()
-      setDays(Math.max(0, Math.floor(diff / 86_400_000)))
+      setDays(Math.max(0, Math.floor(diff / 86_400_000) + 1))
     }
     calc()
     // refresh at midnight
