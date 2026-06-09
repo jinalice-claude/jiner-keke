@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PageShell, PageHead } from '../components/WarmKit'
+import PlayButton from '../components/PlayButton'
 import { THEME as T } from '../theme'
 
 const BASE  = import.meta.env.VITE_OMBRE_MCP_URL    || ''
@@ -321,6 +322,7 @@ export default function Mailbox() {
                     <div style={{ fontFamily: T.sans, fontSize: 15, lineHeight: 2, color: T.cream, whiteSpace: 'pre-wrap' }}>
                       {l.content}
                     </div>
+                    {l.id === 'pinned-1' && <PlayButton text={l.content} />}
                     {canEdit && (
                       <div style={{ marginTop: 16, textAlign: 'right' }}>
                         <button
