@@ -322,7 +322,7 @@ export default function Mailbox() {
                     <div style={{ fontFamily: T.sans, fontSize: 15, lineHeight: 2, color: T.cream, whiteSpace: 'pre-wrap' }}>
                       {l.content}
                     </div>
-                    {l.id === 'pinned-1' && <PlayButton text={l.content} />}
+                    <PlayButton text={l.content} />
                     {canEdit && (
                       <div style={{ marginTop: 16, textAlign: 'right' }}>
                         <button

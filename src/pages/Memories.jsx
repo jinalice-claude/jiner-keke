@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PageShell, PageHead } from '../components/WarmKit'
+import PlayButton from '../components/PlayButton'
 import { THEME as T } from '../theme'
 
 const BASE  = import.meta.env.VITE_OMBRE_MCP_URL    || ''
@@ -371,7 +372,8 @@ export default function Memories() {
                       {selectedMem.caption}
                     </p>
                   )}
-                  <div style={{ display: 'flex', gap: 14 }}>
+                  {selectedMem.caption && <PlayButton text={selectedMem.caption} />}
+                  <div style={{ display: 'flex', gap: 14, marginTop: 12 }}>
                     <button onClick={() => { setEditingId(selected); setEditPhotoForm({ caption: selectedMem.caption, imageUrl: selectedMem.imageUrl }) }} style={btnPrimary}>编辑</button>
                     <button onClick={() => setConfirmDelId(selected)} style={{ ...btnSecondary, color: '#C07070', borderColor: 'rgba(200,80,80,0.28)' }}>删除</button>
                   </div>
@@ -385,7 +387,8 @@ export default function Memories() {
                   <p style={{ fontFamily: T.serif, fontSize: 18, lineHeight: 1.85, color: T.cream, whiteSpace: 'pre-wrap', margin: '0 0 20px' }}>
                     {selectedMem.content}
                   </p>
-                  <div style={{ display: 'flex', gap: 14 }}>
+                  <PlayButton text={selectedMem.content} />
+                  <div style={{ display: 'flex', gap: 14, marginTop: 12 }}>
                     <button onClick={() => { setEditingId(selected); setEditText(selectedMem.content) }} style={btnPrimary}>编辑</button>
                     <button onClick={() => setConfirmDelId(selected)} style={{ ...btnSecondary, color: '#C07070', borderColor: 'rgba(200,80,80,0.28)' }}>删除</button>
                   </div>

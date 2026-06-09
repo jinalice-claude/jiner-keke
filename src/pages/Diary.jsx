@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PageShell, PageHead, HintRow } from '../components/WarmKit'
+import PlayButton from '../components/PlayButton'
 import { THEME as T } from '../theme'
 
 const BASE  = import.meta.env.VITE_OMBRE_MCP_URL   || ''
@@ -258,6 +259,7 @@ export default function Diary() {
           <p style={{ fontSize: 15.5, lineHeight: 2, color: T.cream, margin: '16px 0 18px', maxWidth: 820, whiteSpace: 'pre-wrap' }}>
             {featured.content}
           </p>
+          <PlayButton text={featured.content} />
           {/* 操作行 */}
           {confirmDel ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>

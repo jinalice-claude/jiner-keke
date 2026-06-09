@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PageShell, PageHead } from '../components/WarmKit'
+import PlayButton from '../components/PlayButton'
 import { ClawdPixel } from '../WarmAssets'
 import { THEME as T } from '../theme'
 
@@ -99,6 +100,7 @@ function CapsuleItem({ item, i, onEdit, onDelete }) {
         {item.from && (
           <div style={{ marginTop: 6, fontFamily: T.latin, fontSize: 13, color: T.dim, letterSpacing: 1 }}>—— {item.from}</div>
         )}
+        <PlayButton text={item.line} />
       </div>
       {item.noteDate && (
         <div style={{ fontFamily: T.latin, fontSize: 13, color: T.dim, letterSpacing: 1, whiteSpace: 'nowrap', flexShrink: 0, marginRight: 6 }}>
