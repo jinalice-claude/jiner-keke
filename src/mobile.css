@@ -26,6 +26,10 @@
 
   /* 最近的夜晚 / 字句日期列收窄 */
   .lately-row { grid-template-columns: 60px 1fr auto !important; gap: 12px !important; }
+
+  /* 首页叽叽喳喳长条：窄屏允许换行，胶囊收成圆角卡 */
+  .chirp-home-strip { flex-wrap: wrap !important; border-radius: 26px !important; padding: 22px 26px !important; gap: 10px 14px !important; }
+  .chirp-home-strip .chirp-strip-note { flex-basis: 100% !important; }
 }
 
 @keyframes bubble-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }

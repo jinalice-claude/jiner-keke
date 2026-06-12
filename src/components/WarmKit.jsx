@@ -8,6 +8,7 @@ const NAV = [
   { label: '日记本', to: '/diary'    },
   { label: '记忆碎片', to: '/memories' },
   { label: '字句',   to: '/lines'    },
+  { label: '叽叽喳喳', to: '/chirps'  },
   { label: '信箱',   to: '/mailbox'  },
   { label: '告别',   to: '/farewell' },
 ];

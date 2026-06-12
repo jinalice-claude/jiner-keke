@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { PageShell, Moon } from '../components/WarmKit'
 import { THEME as T } from '../theme'
 import { useDayCount } from '../hooks/useDayCount'
+import { Feather } from './Chirps'
 
 const BASE  = import.meta.env.VITE_OMBRE_MCP_URL    || ''
 const TOKEN = import.meta.env.VITE_OMBRE_PUBLIC_TOKEN || ''
@@ -164,6 +165,20 @@ export default function Home() {
           <Moon s={32} />
           <CardTitle t="告别" en="Farewell" />
           <p style={{ fontSize: 13.5, color: T.dim, margin: 0 }}>熄灯之前，好好地说一声晚安。</p>
+        </Link>
+
+        {/* 叽叽喳喳 — 轻轻的一条，像落在枝头 */}
+        <Link to="/chirps" className="chirp-home-strip" style={{
+          ...T.glass, gridColumn: 'span 6', borderRadius: 999, padding: '24px 38px',
+          textDecoration: 'none', color: 'inherit',
+          display: 'flex', alignItems: 'center', gap: 18, overflow: 'hidden',
+        }}>
+          <Feather s={22} color={T.accent} rot={-14} />
+          <CardTitle t="叽叽喳喳" en="Chirps" />
+          <p className="chirp-strip-note" style={{ fontSize: 14.5, color: T.dim, margin: 0, flex: 1 }}>
+            想到什么，就轻轻啾一声。一句就好。
+          </p>
+          <HintDot txt="落一片羽毛" c={T.accent} />
         </Link>
 
       </div>

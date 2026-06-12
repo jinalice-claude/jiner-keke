@@ -4,6 +4,7 @@ import Diary    from './pages/Diary'
 import Memories from './pages/Memories'
 import Mailbox  from './pages/Mailbox'
 import Lines    from './pages/Lines'
+import Chirps   from './pages/Chirps'
 import Farewell from './pages/Farewell'
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
       <Route path="/memories"  element={<Memories />} />
       <Route path="/mailbox"   element={<Mailbox />}  />
       <Route path="/lines"     element={<Lines />}    />
+      <Route path="/chirps"    element={<Chirps />}   />
       <Route path="/farewell"  element={<Farewell />} />
     </Routes>
   )

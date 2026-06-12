@@ -35,6 +35,20 @@
   50%       { opacity: 0.7; }
 }
 
+/* ── 叽叽喳喳 chirps ─────────────────────────────── */
+/* 羽毛落下：新的一句飘着进来 */
+@keyframes chirp-drop {
+  0%   { opacity: 0; transform: translateY(-16px) rotate(-1.2deg); }
+  60%  { opacity: 1; transform: translateY(3px) rotate(0.4deg); }
+  100% { opacity: 1; transform: translateY(0) rotate(0); }
+}
+.chirp-drop { animation: chirp-drop 0.9s cubic-bezier(.22,.61,.36,1) both; }
+@keyframes sparrow-bob { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-2.5px) rotate(-1.5deg)} }
+.chirp-row + .chirp-row { border-top: 1px solid rgba(255,232,212,0.07); }
+.chirp-bar:focus-within { box-shadow: 0 0 0 1px rgba(255,232,212,0.18) inset, 0 0 30px rgba(231,178,126,0.30) !important; }
+.chirp-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.chirp-bar input::placeholder { color: rgba(201,181,160,0.6); }
+
 /* ── Reset ─────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; }
