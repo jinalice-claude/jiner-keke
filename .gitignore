@@ -2,3 +2,7 @@ node_modules
 dist
 .env
 .env.local
+
+# Claude design 原始素材（本地参考，不入库）
+warm-glow-source/
+warm-glow-source.zip
